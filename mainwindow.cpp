@@ -48,33 +48,86 @@ MainWindow::MainWindow(QWidget *parent)
            }
            m_isUserScrubbing = false;
        });
+
+     //         Playlist init
+     m_playlist_model=new QStandardItemModel(this);
+     this->ui->tableViewPlaylist->setModel(m_playlist_model);
+     m_playlist_model->setHorizontalHeaderLabels(QStringList() << "Audio track" << "File path" << "Duration");
+     this->ui->tableViewPlaylist->setEditTriggers(QAbstractItemView::NoEditTriggers);
+     this->ui->tableViewPlaylist->setSelectionBehavior(QAbstractItemView::SelectRows);
+
+     this->ui->tableViewPlaylist->hideColumn(1);
+     int duration_width = 64;
+     this->ui->tableViewPlaylist->setColumnWidth(2, duration_width);
+     this->ui->tableViewPlaylist->setColumnWidth(0, this->ui->tableViewPlaylist->width()-duration_width*1.7);
+
+     m_playlist = new QMediaPlaylist(m_player);
+     m_player->setPlaylist(m_playlist);
+
+     connect(this->ui->pushButtonPrev, &QPushButton::clicked, this->m_playlist, &QMediaPlaylist::previous);
+         connect(this->ui->pushButtonNext, &QPushButton::clicked, this->m_playlist, &QMediaPlaylist::next);
+         connect(this->m_playlist, &QMediaPlaylist::currentIndexChanged, this->ui->tableViewPlaylist, &QTableView::selectRow);
+         connect(this->ui->tableViewPlaylist, &QTableView::doubleClicked,
+                 [this](const QModelIndex& index){m_playlist->setCurrentIndex(index.row()); this->m_player->play();}
+                 );
+         connect(this->m_player, &QMediaPlayer::currentMediaChanged,
+                 [this](const QMediaContent& media)
+         {
+             this->ui->labelFileName->setText(media.canonicalUrl().toString());
+             this->setWindowTitle(this->ui->labelFileName->text().split('/').last());
+         }
+                 );
 }
 
 MainWindow::~MainWindow()
 {
+    delete m_playlist_model;
+    delete m_playlist;
     delete m_player;
     delete ui;
 }
 
+void MainWindow::loadFileToPlaylist(const QString &filename)
+{
+    m_playlist->addMedia(QUrl(filename));
+    QList<QStandardItem*> items;
+    items.append(new QStandardItem(QDir(filename).dirName()));
+    items.append(new QStandardItem(filename));
+//	QMediaPlayer player;
+//	m_duration_player.setMedia(QUrl(filename));
+//	m_duration_player.play();
+//	items.append(new QStandardItem(QTime::fromMSecsSinceStartOfDay(player.duration()).toString("mm:ss")));
+//	items.append(new QStandardItem(QString::number(m_duration_player.duration())));
+//	m_duration_player.pause();
+    m_playlist_model->appendRow(items);
+    //https://stackoverflow.com/questions/43156906/qmediaplayer-duration-returns-0-always
+}
 
 void MainWindow::on_pushButtonAdd_clicked()
 {
-    QString file = QFileDialog::getOpenFileName
-    (
-      this,
-      "Open file",
-      "",
-      "Audio files (*.mp3 *.flac);; MP-3 (*.mp3);; Flac (*.flac)"
-    );
-    if (!file.isEmpty()) {
-            ui->labelFileName->setText(QString("File: ").append(QFileInfo(file).fileName())); // Отображаем только имя файла
-            m_player->setMedia(QUrl::fromLocalFile(file));
-            // m_player->play(); // Пока не будем автоматически играть после добавления
-            ui->horizontalSliderTime->setEnabled(true); // Включаем слайдер времени
-            // Сброс слайдера времени
-            ui->horizontalSliderTime->setValue(0);
-            ui->labelPosition->setText("00:00"); // Обновляем метку текущего времени
-            ui->labelDuration->setText("00:00"); // Обновляем метку общего времени
+    /*QString file = QFileDialog::getOpenFileName
+        (
+            this,
+            "Open file",
+            "D:\\Users\\User\\Music\\",
+            "Audio files (*.mp3 *.flac);; MP-3 (*.mp3);; Flac (*.flac)"
+        );
+        ui->labelFilename->setText(QString("File: ").append(file));
+        this->m_player->setMedia(QUrl(file));
+        this->m_player->play();*/
+
+        QStringList files = QFileDialog::getOpenFileNames
+                (
+                    this,
+                    "Open file",
+                    "D:\\Users\\User\\Music\\",
+                    "Audio files (*.mp3 *.flac *.flacc);; mp3 (*.mp3);; Flac (*.flac *.flacc)"
+                );
+        //https://legacy.cplusplus.com/doc/tutorial/control/#:~:text=equal%20to%2050.-,Range%2Dbased%20for%20loop,-The%20for%2Dloop
+        //https://www.youtube.com/watch?v=11Yqy4YLppw&list=PLeqyOOqxeiINwoETYVNufASRa3i53K2Gb&index=21
+        for(QString file:files)
+        {
+            loadFileToPlaylist(file);
         }
 }
 
@@ -93,34 +146,12 @@ void MainWindow::on_pushButtonPause_clicked()
 void MainWindow::on_pushButtonStop_clicked()
 {
     this->m_player->stop();
-    // Сброс слайдера времени и меток времени при остановке
-    //ui->horizontalSliderTime->setValue(0);
-    //ui->labelTime->setText("00:00");
-    //ui->labelDuration->setText("00:00");
-
 }
 
 void MainWindow::on_pushButtonMute_clicked()
 {
     m_player->setMuted(!m_player->isMuted());
     ui->pushButtonMute->setIcon(style()->standardIcon(m_player->isMuted()?QStyle::SP_MediaVolumeMuted:QStyle::SP_MediaVolume));
-    //if (m_player->isMuted())
-   // {
-      //  m_player->setMuted(false);
-       // ui->pushButtonMute->setIcon(style()->standardIcon(QStyle::SP_MediaVolume));
-        // При разблокировке звука, можно восстановить громкость, если она была 0
-             //   if (m_player->volume() == 0)
-              //  {
-                //    m_player->setVolume(70); // Или последнее сохраненное значение
-                //    ui->horizontalSliderVolume->setValue(m_player->volume());
-               //     ui->labelVolume->setText(QString("Volume: ").append(QString::number(m_player->volume())));
-              //  }
- //   }
- //   else
-   // {
-    //    m_player->setMuted(true);
-   //     ui->pushButtonMute->setIcon(style()->standardIcon(QStyle::SP_MediaVolumeMuted));
-   // }
 }
 
 
@@ -129,17 +160,6 @@ void MainWindow::on_horizontalSliderVolume_valueChanged(int value)
     m_player->setVolume(value);
     ui->labelVolume->setText(QString("Volume: ").append(QString::number(value)));
 
-    //m_player->setVolume(value);
-    //ui->labelVolume->setText(QString("Volume: ").append(QString::number(value)));
-    //if (m_player->isMuted() && value > 0)
-        //{ // Если громкость стала больше 0, а Mute был включен, то выключаем Mute
-           // m_player->setMuted(false);
-            //ui->pushButtonMute->setIcon(style()->standardIcon(QStyle::SP_MediaVolume));
-       // } else if (value == 0)
-        //{ // Если громкость стала 0, включаем Mute
-           // m_player->setMuted(true);
-           // ui->pushButtonMute->setIcon(style()->standardIcon(QStyle::SP_MediaVolumeMuted));
-       // }
 }
 
 // Реализация нового слота для обновления позиции
@@ -147,25 +167,7 @@ void MainWindow::on_player_positionChanged(qint64 position)
 {
     this->ui->labelPosition->setText(QString(QTime::fromMSecsSinceStartOfDay(position).toString("hh:mm:ss")));
     this->ui->horizontalSliderTime->setValue(position);
-    //if (!m_isUserScrubbing)
-    //{ // Обновляем слайдер, только если пользователь не перетаскивает его
-       // if (m_player->duration() > 0)
-        //{
-            // Преобразуем миллисекунды в значение для слайдера (0-1000)
-            //int sliderValue = static_cast<int>(static_cast<double>(position) / m_player->duration() * ui->horizontalSliderTime->maximum());
-           // ui->horizontalSliderTime->setValue(sliderValue);
 
-            // Обновляем метку текущего времени
-            //QTime time(0, 0, 0);
-           // time = time.addMSecs(position);
-           // ui->labelTime->setText(time.toString("mm:ss"));
-       // } else
-       // {
-            // Если длительность неизвестна, устанавливаем 0
-           // ui->horizontalSliderTime->setValue(0);
-           // ui->labelTime->setText("00:00");
-        //}
-    //}
 }
 
 // Реализация нового слота для установки максимального значения слайдера
@@ -173,17 +175,5 @@ void MainWindow::on_player_durationChanged(qint64 duration)
 {
     this->ui->horizontalSliderTime->setRange(0, duration);
     this->ui->labelDuration->setText(QTime::fromMSecsSinceStartOfDay(duration).toString("hh:mm:ss"));
-    //if (duration > 0) {
-       // ui->horizontalSliderTime->setRange(0, 1000); // Диапазон от 0 до 1000 для удобства масштабирования
-       // ui->horizontalSliderTime->setEnabled(true);
 
-        // Обновляем метку общего времени
-       // QTime time(0, 0, 0);
-       // time = time.addMSecs(duration);
-       // ui->labelDuration->setText(time.toString("mm:ss"));
-   // } else {
-      //  ui->horizontalSliderTime->setRange(0, 100); // Временный диапазон, если длительность неизвестна
-        //ui->horizontalSliderTime->setEnabled(false);
-        //ui->labelDuration->setText("00:00");
-   //}
 }

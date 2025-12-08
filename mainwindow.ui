@@ -7,19 +7,19 @@
     <x>0</x>
     <y>0</y>
     <width>590</width>
-    <height>199</height>
+    <height>384</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>590</width>
-    <height>199</height>
+    <height>384</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>590</width>
-    <height>199</height>
+    <height>384</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -197,6 +197,16 @@
     </property>
     <property name="text">
      <string/>
+    </property>
+   </widget>
+   <widget class="QTableView" name="tableViewPlaylist">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>150</y>
+      <width>551</width>
+      <height>181</height>
+     </rect>
     </property>
    </widget>
   </widget>

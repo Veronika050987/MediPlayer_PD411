@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 #include <QMediaPlayer>
+#include <QMediaPlaylist>
+#include <QStandardItemModel>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -15,6 +17,8 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+
+    void loadFileToPlaylist(const QString& filename);
 
 private slots:
     void on_pushButtonAdd_clicked();
@@ -39,5 +43,7 @@ private:
     Ui::MainWindow *ui;
     QMediaPlayer* m_player;
     bool m_isUserScrubbing = false;// Флаг, чтобы не реагировать на изменения слайдера во время его перетаскивания пользователем
+    QMediaPlaylist* m_playlist;
+    QStandardItemModel* m_playlist_model;
 };
 #endif // MAINWINDOW_H
