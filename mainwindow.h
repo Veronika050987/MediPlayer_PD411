@@ -39,6 +39,10 @@ private slots:
     void on_player_durationChanged(qint64 duration);
 
 
+    void on_pushButtonShuffle_toggled(bool checked);
+
+    void on_pushButtonRepeat_toggled(bool checked);
+
 private:
     Ui::MainWindow *ui;
     QMediaPlayer* m_player;

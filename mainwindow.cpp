@@ -5,6 +5,10 @@
 #include <QUrl>//подключение файла
 #include <QDateTime>// Для форматирования времени
 #include <QTime>
+#include <QPushButton> // Add this include
+#include <QIcon>
+#include <QHBoxLayout>
+#include <QMediaPlaylist>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -22,6 +26,46 @@ MainWindow::MainWindow(QWidget *parent)
     ui->pushButtonMute->setIcon(style()->standardIcon(QStyle::SP_MediaVolume));
 
     ui->horizontalSliderVolume->setRange(0,100);
+
+    // Shuffle Button
+    ui->pushButtonShuffle = new QPushButton(this);
+       //ui->pushButtonShuffle->setIcon(style()->standardIcon(QStyle::SP_MediaShuffle));
+       ui->pushButtonShuffle->setCheckable(true);
+
+       if (ui->horizontalLayout) { // Check if the layout exists
+           ui->horizontalLayout->insertWidget(3, ui->pushButtonShuffle);
+       } else
+       {
+           //QHBoxLayout *layout = new QHBoxLayout();
+           //layout->addWidget(ui->pushButtonShuffle);
+           //layout->addWidget(ui->pushButtonPrev);
+           //layout->addWidget(ui->pushButtonPlay);
+           //layout->addWidget(ui->pushButtonNext);
+           //ui->tableViewPlaylist->setLayout(layout);
+
+       }
+       connect(ui->pushButtonShuffle, &QPushButton::toggled, this, &MainWindow::on_pushButtonShuffle_toggled);
+
+
+
+   // Repeat Button
+       ui->pushButtonRepeat = new QPushButton(this);
+           ui->pushButtonRepeat->setIcon(style()->standardIcon(QStyle::SP_BrowserReload));
+           ui->pushButtonRepeat->setCheckable(true);
+
+           if (ui->horizontalLayout)
+           {
+             ui->horizontalLayout->insertWidget(4, ui->pushButtonRepeat);
+           } else
+           {
+
+               if (ui->tableViewPlaylist->layout())
+               {
+                   ui->tableViewPlaylist->layout()->addWidget(ui->pushButtonRepeat);
+               }
+
+           }
+           connect(ui->pushButtonRepeat, &QPushButton::toggled, this, &MainWindow::on_pushButtonRepeat_toggled);
 
     //PlayerInit:
     m_player = new QMediaPlayer();
@@ -81,6 +125,8 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    delete ui->pushButtonShuffle;
+    delete ui->pushButtonRepeat;
     delete m_playlist_model;
     delete m_playlist;
     delete m_player;
@@ -90,41 +136,28 @@ MainWindow::~MainWindow()
 void MainWindow::loadFileToPlaylist(const QString &filename)
 {
     m_playlist->addMedia(QUrl(filename));
-    QList<QStandardItem*> items;
-    items.append(new QStandardItem(QDir(filename).dirName()));
-    items.append(new QStandardItem(filename));
-//	QMediaPlayer player;
-//	m_duration_player.setMedia(QUrl(filename));
-//	m_duration_player.play();
-//	items.append(new QStandardItem(QTime::fromMSecsSinceStartOfDay(player.duration()).toString("mm:ss")));
-//	items.append(new QStandardItem(QString::number(m_duration_player.duration())));
-//	m_duration_player.pause();
-    m_playlist_model->appendRow(items);
-    //https://stackoverflow.com/questions/43156906/qmediaplayer-duration-returns-0-always
+       QList<QStandardItem*> items;
+       items.append(new QStandardItem(QDir(filename).dirName()));
+       items.append(new QStandardItem(filename));
+   //	QMediaPlayer player;
+   //	m_duration_player.setMedia(QUrl(filename));
+   //	m_duration_player.play();
+   //	items.append(new QStandardItem(QTime::fromMSecsSinceStartOfDay(player.duration()).toString("mm:ss")));
+   //	items.append(new QStandardItem(QString::number(m_duration_player.duration())));
+   //	m_duration_player.pause();
+       m_playlist_model->appendRow(items);
+       //https://stackoverflow.com/questions/43156906/qmediaplayer-duration-returns-0-always
 }
 
 void MainWindow::on_pushButtonAdd_clicked()
 {
-    /*QString file = QFileDialog::getOpenFileName
-        (
-            this,
-            "Open file",
-            "D:\\Users\\User\\Music\\",
-            "Audio files (*.mp3 *.flac);; MP-3 (*.mp3);; Flac (*.flac)"
-        );
-        ui->labelFilename->setText(QString("File: ").append(file));
-        this->m_player->setMedia(QUrl(file));
-        this->m_player->play();*/
-
-        QStringList files = QFileDialog::getOpenFileNames
+    QStringList files = QFileDialog::getOpenFileNames
                 (
                     this,
                     "Open file",
                     "D:\\Users\\User\\Music\\",
                     "Audio files (*.mp3 *.flac *.flacc);; mp3 (*.mp3);; Flac (*.flac *.flacc)"
                 );
-        //https://legacy.cplusplus.com/doc/tutorial/control/#:~:text=equal%20to%2050.-,Range%2Dbased%20for%20loop,-The%20for%2Dloop
-        //https://www.youtube.com/watch?v=11Yqy4YLppw&list=PLeqyOOqxeiINwoETYVNufASRa3i53K2Gb&index=21
         for(QString file:files)
         {
             loadFileToPlaylist(file);
@@ -140,7 +173,7 @@ void MainWindow::on_pushButtonPlay_clicked()
 
 void MainWindow::on_pushButtonPause_clicked()
 {
-   m_player->state() == QMediaPlayer::State::PausedState? m_player->play() :  this->m_player->pause();
+    m_player->state() == QMediaPlayer::State::PausedState? m_player->play() :  this->m_player->pause();
 }
 
 void MainWindow::on_pushButtonStop_clicked()
@@ -177,3 +210,20 @@ void MainWindow::on_player_durationChanged(qint64 duration)
     this->ui->labelDuration->setText(QTime::fromMSecsSinceStartOfDay(duration).toString("hh:mm:ss"));
 
 }
+
+
+void MainWindow::on_pushButtonShuffle_toggled(bool checked)
+{
+   // m_playlist->setShuffle(checked);
+}
+
+
+void MainWindow::on_pushButtonRepeat_toggled(bool checked)
+{
+    if (checked) {
+            m_playlist->setPlaybackMode(QMediaPlaylist::Loop);
+        } else {
+            m_playlist->setPlaybackMode(QMediaPlaylist::Sequential);
+        }
+}
+
