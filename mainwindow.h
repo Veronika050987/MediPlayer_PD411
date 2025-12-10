@@ -18,6 +18,8 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    void initPlayList();
+
     void loadFileToPlaylist(const QString& filename);
 
 private slots:
@@ -38,10 +40,13 @@ private slots:
     // Новый слот для установки максимального значения слайдера времени
     void on_player_durationChanged(qint64 duration);
 
+    void on_pushButtonShuffle_clicked();
 
-    void on_pushButtonShuffle_toggled(bool checked);
+    void on_pushButtonLoop_clicked();
 
-    void on_pushButtonRepeat_toggled(bool checked);
+    void on_pushButtonDel_clicked();
+
+    void on_pushButtonClr_clicked();
 
 private:
     Ui::MainWindow *ui;
@@ -49,5 +54,8 @@ private:
     bool m_isUserScrubbing = false;// Флаг, чтобы не реагировать на изменения слайдера во время его перетаскивания пользователем
     QMediaPlaylist* m_playlist;
     QStandardItemModel* m_playlist_model;
+
+    bool shuffle;
+    bool loop;
 };
 #endif // MAINWINDOW_H

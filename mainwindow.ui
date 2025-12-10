@@ -98,14 +98,14 @@
    <widget class="QPushButton" name="pushButtonAdd">
     <property name="geometry">
      <rect>
-      <x>310</x>
-      <y>40</y>
+      <x>20</x>
+      <y>340</y>
       <width>61</width>
       <height>24</height>
      </rect>
     </property>
     <property name="text">
-     <string>Add</string>
+     <string>ADD</string>
     </property>
    </widget>
    <widget class="QSlider" name="horizontalSliderVolume">
@@ -163,7 +163,7 @@
    <widget class="QLabel" name="labelDuration">
     <property name="geometry">
      <rect>
-      <x>394</x>
+      <x>420</x>
       <y>80</y>
       <width>111</width>
       <height>20</height>
@@ -209,42 +209,70 @@
      </rect>
     </property>
    </widget>
+   <widget class="QPushButton" name="pushButtonDir">
+    <property name="geometry">
+     <rect>
+      <x>80</x>
+      <y>340</y>
+      <width>61</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>DIR</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButtonDel">
+    <property name="geometry">
+     <rect>
+      <x>140</x>
+      <y>340</y>
+      <width>61</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>DEL</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButtonClr">
+    <property name="geometry">
+     <rect>
+      <x>200</x>
+      <y>340</y>
+      <width>61</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>CLR</string>
+    </property>
+   </widget>
    <widget class="QPushButton" name="pushButtonShuffle">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>330</y>
-      <width>61</width>
-      <height>21</height>
+      <x>300</x>
+      <y>70</y>
+      <width>41</width>
+      <height>28</height>
      </rect>
     </property>
     <property name="text">
-     <string>Shuffle</string>
+     <string>S</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButtonRepeat">
+   <widget class="QPushButton" name="pushButtonLoop">
     <property name="geometry">
      <rect>
-      <x>100</x>
-      <y>330</y>
-      <width>61</width>
-      <height>21</height>
+      <x>350</x>
+      <y>70</y>
+      <width>41</width>
+      <height>28</height>
      </rect>
     </property>
     <property name="text">
-     <string>Repeat</string>
+     <string>L</string>
     </property>
-   </widget>
-   <widget class="QWidget" name="horizontalLayoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>329</y>
-      <width>241</width>
-      <height>101</height>
-     </rect>
-    </property>
-    <layout class="QHBoxLayout" name="horizontalLayout"/>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
