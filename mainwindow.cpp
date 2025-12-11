@@ -5,10 +5,8 @@
 #include <QUrl>//подключение файла
 #include <QDateTime>// Для форматирования времени
 #include <QTime>
-#include <QPushButton> // Add this include
-#include <QIcon>
-#include <QHBoxLayout>
-#include <QMediaPlaylist>
+#include <QDir>
+#include <QFileDialog>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -23,6 +21,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->pushButtonPlay->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
     ui->pushButtonPause->setIcon(style()->standardIcon(QStyle::SP_MediaPause));
     ui->pushButtonStop->setIcon(style()->standardIcon(QStyle::SP_MediaStop));
+    ui->pushButtonDir->setIcon(style()->standardIcon(QStyle::SP_DirOpenIcon));
     ui->pushButtonMute->setIcon(style()->standardIcon(QStyle::SP_MediaVolume));
     //ui->pushButtonShuffle->setIcon(style()->standardIcon(QStyle::SP_MediaShuffle));
     ui->pushButtonLoop->setIcon(style()->standardIcon(QStyle::SP_BrowserReload));
@@ -88,8 +87,12 @@ MainWindow::MainWindow(QWidget *parent)
          shuffle = false;
          loop = false;
 
+         loadPlaylist();
+
+         connect(qApp, &QCoreApplication::aboutToQuit, this, &MainWindow::savePlaylist);
          //connect(this->ui->pushButtonClr, &QPushButton::clicked, this->m_playlist, &QMediaPlaylist::clear);
          //connect(this->ui->pushButtonClr, &QPushButton::clicked, this->m_playlist_model, &QStandardItemModel::clear);
+         //connect(ui->pushButtonDir, &QPushButton::clicked, this, &MainWindow::on_pushButtonDir_clicked);
 }
 
 MainWindow::~MainWindow()
@@ -237,3 +240,113 @@ void MainWindow::on_pushButtonClr_clicked()
     initPlayList();
 }
 
+
+void MainWindow::on_pushButtonDir_clicked()
+{
+    // Выбор директории
+    QString dirPath = QFileDialog::getExistingDirectory(this,
+                                                        tr("Select directory"),
+                                                        QDir::homePath(),
+                                                        QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    if (dirPath.isEmpty())
+    {
+        return;
+    }
+    // Настройка фильтра для поиска аудиофайлов
+    QDir directory(dirPath);
+    QStringList nameFilters;
+    nameFilters << "*.mp3" << "*.flac";
+
+    // Получение списка файлов, соответствующих фильтрам
+    QFileInfoList fileList = directory.entryInfoList(nameFilters, QDir::Files);
+
+    if(fileList.isEmpty())
+    {
+        qDebug() << "No audio files found in directory: " << dirPath;
+        return;
+    }
+
+    // Добавление каждого найденного файла в плейлист
+    for (const QFileInfo &fileInfo : fileList)
+    {
+        QString filePath = fileInfo.absoluteFilePath();
+        loadFileToPlaylist(filePath);
+    }
+}
+
+void MainWindow::savePlaylist()
+{
+    QSettings settings("MyCompany", "AudioPlayer");
+    settings.beginWriteArray("Playlist");
+
+    for(int i=0; i<m_playlist->mediaCount(); i++)
+    {
+        QMediaContent content = m_playlist->media(i);
+
+        settings.setArrayIndex(i);
+        settings.setValue("path", content.canonicalUrl().toString());
+    }
+    settings.endArray();
+
+    if (m_playlist->currentIndex()>=0)
+    {
+        settings.setValue("currentIndex", m_playlist->currentIndex());
+    }
+    settings.sync();
+}
+
+void MainWindow::loadPlaylist()
+{
+    QSettings settings("MyCompany", "AudioPlayer");
+        int size = settings.beginReadArray("Playlist");
+
+        for (int i = 0; i < size; ++i)
+        {
+            settings.setArrayIndex(i);
+            QString urlString = settings.value("path").toString();
+
+            QUrl url = QUrl::fromUserInput(urlString);
+
+            // Проверка существования файла и валидности URL
+            if (url.isValid() && QFileInfo(url.toLocalFile()).exists())
+            {
+
+                m_playlist->addMedia(url);
+
+                QList<QStandardItem*> items;
+                QFileInfo fileInfo(url.toLocalFile());
+
+                items.append(new QStandardItem(fileInfo.baseName()));
+                items.append(new QStandardItem(url.toString()));
+
+                items.append(new QStandardItem("--:--")); // Длительность
+
+                m_playlist_model->appendRow(items);
+
+            }
+            else
+            {
+                qWarning() << "Skipping missing file during playlist restoration:" << urlString;
+            }
+        }
+        settings.endArray();
+
+        // 4. Восстановление текущего индекса
+        int currentIndex = settings.value("currentIndex", -1).toInt();
+        if (currentIndex >= 0 && currentIndex < m_playlist->mediaCount())
+        {
+            m_playlist->setCurrentIndex(currentIndex);
+
+            // Обновление метки текущего файла на экране
+            const QMediaContent& media = m_playlist->currentMedia();
+
+            // **БЕЗОПАСНАЯ ПРОВЕРКА, ИСПОЛЬЗУЯ canonicalUrl() и проверяя, что результат не пуст**
+            QUrl currentUrl = media.canonicalUrl();
+
+            if (!currentUrl.isEmpty())
+            {
+                this->ui->labelFileName->setText(currentUrl.fileName());
+                this->setWindowTitle(currentUrl.fileName());
+            }
+        }
+}

@@ -5,6 +5,7 @@
 #include <QMediaPlayer>
 #include <QMediaPlaylist>
 #include <QStandardItemModel>
+#include <QSettings>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -48,6 +49,11 @@ private slots:
 
     void on_pushButtonClr_clicked();
 
+    void on_pushButtonDir_clicked();
+
+    void savePlaylist();
+    void loadPlaylist();
+
 private:
     Ui::MainWindow *ui;
     QMediaPlayer* m_player;
@@ -57,5 +63,6 @@ private:
 
     bool shuffle;
     bool loop;
+
 };
 #endif // MAINWINDOW_H
