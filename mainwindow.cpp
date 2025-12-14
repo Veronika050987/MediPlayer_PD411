@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "SoundWaveWidget.h"
 #include <QStyle>
 #include <QFileDialog>
 #include <QUrl>//подключение файла
@@ -93,6 +94,15 @@ MainWindow::MainWindow(QWidget *parent)
          //connect(this->ui->pushButtonClr, &QPushButton::clicked, this->m_playlist, &QMediaPlaylist::clear);
          //connect(this->ui->pushButtonClr, &QPushButton::clicked, this->m_playlist_model, &QStandardItemModel::clear);
          //connect(ui->pushButtonDir, &QPushButton::clicked, this, &MainWindow::on_pushButtonDir_clicked);
+
+         //m_soundWaveWidget = new SoundWaveWidget(this);
+         //ui->setupUi(this)->addWidget(m_soundWaveWidget, 3, 0, 1, 4);
+         m_soundWaveWidget = ui->soundWaveWidget;
+
+         if (m_soundWaveWidget)
+         {
+            m_soundWaveWidget->setVolumeLevel(m_player->volume() / 100.0);
+         }
 }
 
 MainWindow::~MainWindow()
@@ -176,13 +186,40 @@ void MainWindow::on_horizontalSliderVolume_valueChanged(int value)
     m_player->setVolume(value);
     ui->labelVolume->setText(QString("Volume: ").append(QString::number(value)));
 
+    m_soundWaveWidget->setVolumeLevel(value/100.0);
 }
 
 // Реализация нового слота для обновления позиции
 void MainWindow::on_player_positionChanged(qint64 position)
 {
     this->ui->labelPosition->setText(QString(QTime::fromMSecsSinceStartOfDay(position).toString("hh:mm:ss")));
-    this->ui->horizontalSliderTime->setValue(position);
+    //this->ui->horizontalSliderTime->setValue(position);
+
+    // Обновляем слайдер времени
+        if (m_player->duration() > 0) {
+            // Если слайдер time не имеет максимального значения duration,
+            // то его установка может вызвать проблемы.
+            // Если ui->horizontalSliderTime настроен на диапазон 0 до duration,
+            // то при ручном скраббинге нам нужно его обходить.
+            if (!m_isUserScrubbing) {
+                // Здесь мы устанавливаем значение слайдера в соответствии с позицией
+                // *** ВНИМАНИЕ: Если максимальное значение слайдера 0, это вызовет сбой! ***
+                if (ui->horizontalSliderTime->maximum() > 0) {
+                     ui->horizontalSliderTime->setValue(position);
+                }
+            }
+        }
+
+        // --- ОБНОВЛЕНИЕ ВИЗУАЛИЗАТОРА АКТИВНОСТИ ---
+        if (m_player->state() == QMediaPlayer::PlayingState) {
+            // При воспроизведении показываем небольшую активность,
+            // основанную на громкости (для имитации VU Meter)
+            double activity = 0.1 + (0.8 * (m_player->volume() / 100.0));
+            m_soundWaveWidget->setVolumeLevel(activity);
+        } else if (!m_isUserScrubbing) {
+            // Если остановлено или на паузе, плавно затухаем
+            m_soundWaveWidget->setVolumeLevel(0.0);
+        }
 
 }
 

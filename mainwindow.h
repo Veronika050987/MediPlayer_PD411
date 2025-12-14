@@ -1,6 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "SoundWaveWidget.h"
 #include <QMainWindow>
 #include <QMediaPlayer>
 #include <QMediaPlaylist>
@@ -63,6 +64,8 @@ private:
 
     bool shuffle;
     bool loop;
+
+    SoundWaveWidget *m_soundWaveWidget;
 
 };
 #endif // MAINWINDOW_H
